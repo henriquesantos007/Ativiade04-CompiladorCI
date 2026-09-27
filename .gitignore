@@ -1,0 +1,8 @@
+# Ignorar os executáveis
+lexer
+
+# Ignorar os objetos
+*.o
+
+# Ignorar arquivo de teste do lexer
+meuTeste.c
