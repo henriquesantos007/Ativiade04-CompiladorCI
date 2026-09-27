@@ -32,7 +32,7 @@ São reconhecidos os seguintes tokens:
 Na pasta do projeto, compile o programa com GCC:
 
 ```sh
-gcc -std=c11 -Wall -Wextra -Werror meuTeste.c lexer.c -o lexer
+gcc -std=c11 -Wall -Wextra -Werror main.c lexer.c -o lexer
 ```
 
 Passe o caminho do arquivo de entrada como argumento:
@@ -60,4 +60,5 @@ O programa imprime cada token no formato `<TIPO, "LEXEMA", INDICE>`, incluindo `
 
 - `lexer.h`: tipos `Token` e `Lexer` e declaração da função `proximoToken`.
 - `lexer.c`: implementação do analisador léxico.
+- `main.c`: integração do analisador léxico, leitura do arquivo de entrada e exibição dos tokens.
 - `exemplo01.txt`, `exemplo02.txt` e `exemplo03.txt`: arquivos de entrada para teste.
