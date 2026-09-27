@@ -16,6 +16,17 @@ typedef struct {
 	size_t indice;
 } Token;
 
+typedef struct {
+	const char *buffer;
+	int indice;
+} Lexer;
+
+Lexer inicializaLexer(const char *buffer) {
+	Lexer lexer;
+	lexer.buffer = buffer;
+	lexer.indice = 0;
+	return lexer;
+}
 
 int main(){
 
