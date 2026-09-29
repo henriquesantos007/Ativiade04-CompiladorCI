@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "lexer.h"
+#include "parser.h"
+#include "ast.h"
 
 const char *nomeTipoToken(TipoToken tipo) {
     switch (tipo) {
@@ -75,10 +77,23 @@ int main( int argc, char *argv[]){
         codigoSaida = 1;
     }
 
+    // Analise sintatica: refaz a leitura do buffer com um novo Lexer, ja que
+    // o primeiro foi consumido inteiramente durante a impressao dos tokens acima
+    if (codigoSaida == 0) {
+        Lexer lexerSintatico = inicializaLexer(buffer);
+        Parser parser = inicializaParser(&lexerSintatico);
+
+        Exp *arvore = analisaPrograma(&parser);
+
+        printf("Arvore Sintatica: ");
+        imprimeExp(arvore);
+        printf("\n");
+
+        liberaExp(arvore);
+    }
+
     fclose(arquivo);
     free(buffer);
-
-
 
     return codigoSaida;
 }
