@@ -1,4 +1,4 @@
-# Atividade 04 — Compilador EC1 (Expressões Constantes)
+# Atividade 05 — Compilador EC1 (Geração de Código)
 
 **Disciplina:** Construção de Compiladores — Prof. Andrei Formiga  
 **Plataforma alvo:** x86-64 / Linux (GNU Assembler)
@@ -37,47 +37,62 @@ A partir da sequência de tokens do lexer, o analisador sintático (`parser.h`/`
 <op>        ::= '+' | '-' | '*' | '/'
 ```
 
-O resultado é uma árvore de sintaxe abstrata (`ast.h`/`ast.c`), com nós de constante (`NO_CONST`) e de operação binária (`NO_OPBIN`). Qualquer erro léxico ou sintático encontrado durante a análise é reportado em `stderr` e encerra o programa com código de saída diferente de zero. A implementação do interpretador (avaliação do valor da expressão) fica para uma etapa seguinte.
+O resultado é uma árvore de sintaxe abstrata (`ast.h`/`ast.c`), com nós de constante (`NO_CONST`) e de operação binária (`NO_OPBIN`). Qualquer erro léxico ou sintático encontrado durante a análise é reportado em `stderr` e encerra o programa com código de saída diferente de zero.
 
 ## 4. Compilação e execução
 
 Na pasta do projeto, compile o programa com GCC:
 
 ```sh
-gcc -std=c11 -Wall -Wextra -Werror main.c lexer.c parser.c ast.c -o compilador
+gcc -std=c11 -Wall -Wextra -Werror \
+  -Ianalise_lexica -Ianalise_sintatica -Isintese \
+  main.c analise_lexica/lexer.c analise_sintatica/parser.c \
+  analise_sintatica/ast.c sintese/gerador.c -o compilador
 ```
 
-Passe o caminho do arquivo de entrada como argumento:
+O modo padrão preserva a saída de tokens e da árvore sintática:
 
 ```sh
-./compilador exemplo01.txt
+./compilador tests/exemplo04.txt
 ```
 
-Para testar os outros exemplos:
+Para gerar um programa assembly completo, use `--asm`. A saída padrão contém
+somente o assembly, então pode ser redirecionada diretamente para um arquivo:
 
 ```sh
-./compilador exemplo02.txt
-./compilador exemplo03.txt
-./compilador exemplo04.txt
+./compilador --asm tests/exemplo04.txt > programa.s
+as --64 programa.s -o programa.o
+ld programa.o -o programa
+./programa
 ```
 
-O programa imprime cada token no formato `<TIPO, "LEXEMA", INDICE>`, incluindo `TOKEN_EOF` ao final, e em seguida a árvore sintática do programa (quando a análise sintática é bem-sucedida). Se encontrar um caractere não reconhecido ou uma estrutura sintática inválida, imprime uma mensagem de erro e termina com código de saída diferente de zero.
+Execute o comando `as` a partir da pasta do projeto para que ele encontre
+`runtime.s`, incluído pelo assembly gerado. O programa montado imprime o
+resultado inteiro da expressão e encerra.
 
-## 5. Arquivos de exemplo
+Execute os testes automatizados de geração, montagem e execução com:
 
-- `exemplo01.txt`: expressão com operadores fora do formato totalmente parentetizado exigido pela gramática EC1 — válida lexicamente, mas rejeitada pela análise sintática.
-- `exemplo02.txt`: arquivo vazio, para verificar o tratamento imediato do fim de arquivo.
-- `exemplo03.txt`: expressão com caracteres não reconhecidos, para verificar a geração de tokens `ERRO`.
-- `exemplo04.txt`: expressão válida segundo a gramática EC1, para verificar a árvore sintática gerada.
+```sh
+sh tests/test_gerador.sh
+```
+
+## 5. Arquivos de exemplo e testes
+
+- `tests/exemplo01.txt`: expressão com operadores fora do formato totalmente parentetizado exigido pela gramática EC1 — válida lexicamente, mas rejeitada pela análise sintática.
+- `tests/exemplo02.txt`: arquivo vazio, para verificar o tratamento imediato do fim de arquivo.
+- `tests/exemplo03.txt`: expressão com caracteres não reconhecidos, para verificar a geração de tokens `ERRO`.
+- `tests/exemplo04.txt`: expressão válida segundo a gramática EC1; também pode ser usada para gerar e executar assembly.
 
 ## 6. Organização dos arquivos
 
-- `lexer.h` / `lexer.c`: tipos `Token` e `Lexer`, e implementação do analisador léxico.
-- `ast.h` / `ast.c`: estrutura da árvore de sintaxe abstrata (`Exp`) e funções auxiliares (`criaConst`, `criaOpBin`, `liberaExp`, `imprimeExp`).
-- `parser.h` / `parser.c`: analisador sintático descendente recursivo (`analisaPrograma`, `analisaExpressao`, `analisaOperador`).
-- `main.c`: leitura do arquivo de entrada, exibição dos tokens e da árvore sintática.
-- `exemplo01.txt` a `exemplo04.txt`: arquivos de entrada para teste.
+- `analise_lexica/lexer.h` / `lexer.c`: tipos `Token` e `Lexer`, e implementação do analisador léxico.
+- `analise_sintatica/ast.h` / `ast.c`: estrutura da árvore de sintaxe abstrata (`Exp`) e funções auxiliares.
+- `analise_sintatica/parser.h` / `parser.c`: analisador sintático descendente recursivo.
+- `sintese/gerador.h` / `gerador.c`: geração recursiva de um programa assembly x86-64 completo.
+- `runtime.s`: rotinas `imprime_num` e `sair`, incluídas no assembly gerado.
+- `main.c`: leitura da entrada; imprime tokens e AST no modo padrão, ou assembly completo com `--asm`.
+- `tests/`: expressões de exemplo para análise e geração de código.
 
 ## 7. Uso de LLMs
 
-Parte da implementação da análise sintática (`ast.h`, `ast.c`, `parser.h`, `parser.c`) e a integração em `main.c` foram feitas com apoio do Claude Code, a partir do material da disciplina (gramática da linguagem EC1 e algoritmo de análise descendente recursiva descritos no documento da Atividade 04). O código gerado foi revisado antes do commit.
+As etapas anteriores da análise sintática e sua integração foram desenvolvidas com apoio do Claude Code, conforme registrado na entrega da Atividade 04. A geração de assembly, o runtime e a integração do modo `--asm` foram desenvolvidos com apoio de um assistente de IA, a partir dos requisitos da Atividade 05. As alterações foram revisadas e validadas compilando, montando e executando o código gerado.
