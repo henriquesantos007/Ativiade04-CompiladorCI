@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "lexer.h"
 #include "parser.h"
 #include "ast.h"
+#include "gerador.h"
 
 const char *nomeTipoToken(TipoToken tipo) {
     switch (tipo) {
@@ -24,36 +26,53 @@ const char *nomeTipoToken(TipoToken tipo) {
 }
 
 int main( int argc, char *argv[]){
+    int modoAssembly = argc == 3 && strcmp(argv[1], "--asm") == 0;
+    const char *caminhoEntrada = modoAssembly ? argv[2] :
+        (argc == 2 ? argv[1] : NULL);
 
     //Verifica a quantidade de argumentos
-    if (argc != 2) {
-    printf("Uso: %s <arquivo>\n", argv[0]);
+    if (caminhoEntrada == NULL) {
+    fprintf(stderr, "Uso: %s [--asm] <arquivo>\n", argv[0]);
     return 1;
     }
 
     //Abre o arquivo
-    FILE *arquivo = fopen(argv[1], "r");
+    FILE *arquivo = fopen(caminhoEntrada, "r");
     if (arquivo == NULL) {
-    printf("Erro ao abrir o arquivo.\n");
+    perror("Erro ao abrir o arquivo");
     return 1;
     }
 
     //verifica o tamanho do arquivo 
-    fseek(arquivo, 0, SEEK_END);
+    if (fseek(arquivo, 0, SEEK_END) != 0) {
+    perror("Erro ao buscar o fim do arquivo");
+    fclose(arquivo);
+    return 1;
+    }
     long tamanho = ftell(arquivo);
-    rewind(arquivo);
+    if (tamanho < 0 || fseek(arquivo, 0, SEEK_SET) != 0) {
+    perror("Erro ao determinar o tamanho do arquivo");
+    fclose(arquivo);
+    return 1;
+    }
 
     //reserva memória para o conteúdo do arquivo
-    char *buffer = malloc((tamanho + 1) * sizeof(char));
+    char *buffer = malloc((size_t)tamanho + 1);
     if (buffer == NULL) {
-    printf("Erro ao alocar memória.\n");
+    fprintf(stderr, "Erro ao alocar memória.\n");
     fclose(arquivo);
     return 1;
     }
 
     //Ler o conteúdo do arquivo
-    size_t lidos = fread(buffer, sizeof(char), tamanho, arquivo);
+    size_t lidos = fread(buffer, sizeof(char), (size_t)tamanho, arquivo);
     buffer[lidos] = '\0';
+    if (lidos != (size_t)tamanho || ferror(arquivo)) {
+    fprintf(stderr, "Erro ao ler o arquivo de entrada.\n");
+    free(buffer);
+    fclose(arquivo);
+    return 1;
+    }
 
     Lexer lexer = inicializaLexer(buffer);
 
@@ -62,10 +81,12 @@ int main( int argc, char *argv[]){
     do {
         token = proximoToken(&lexer);
 
-        printf("<%s, \"%s\", %zu>\n",
-            nomeTipoToken(token.tipo),
-            token.lexema,
-            token.indice);
+        if (!modoAssembly) {
+            printf("<%s, \"%s\", %zu>\n",
+                nomeTipoToken(token.tipo),
+                token.lexema,
+                token.indice);
+        }
 
         free(token.lexema);
 
@@ -85,11 +106,19 @@ int main( int argc, char *argv[]){
 
         Exp *arvore = analisaPrograma(&parser);
 
-        printf("Arvore Sintatica: ");
-        imprimeExp(arvore);
-        printf("\n");
+        if (modoAssembly) {
+            if (gerar_codigo_ast(arvore, stdout) != 0) {
+                fprintf(stderr, "Erro ao gerar o codigo assembly.\n");
+                codigoSaida = 1;
+            }
+        } else {
+            printf("Arvore Sintatica: ");
+            imprimeExp(arvore);
+            printf("\n");
+        }
 
         liberaExp(arvore);
+        free(parser.atual.lexema);
     }
 
     fclose(arquivo);
