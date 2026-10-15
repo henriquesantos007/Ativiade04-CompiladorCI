@@ -1,5 +1,6 @@
 # Ignorar os executáveis
 lexer
+compilador
 
 # Ignorar os objetos
 *.o
