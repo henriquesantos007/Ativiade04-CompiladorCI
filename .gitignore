@@ -5,5 +5,9 @@ compilador
 # Ignorar os objetos
 *.o
 
+# Ignorar arquivos compilados
+programa
+programa.s
+
 # Ignorar arquivo de teste do lexer
 meuTeste.c
