@@ -81,10 +81,17 @@ int main( int argc, char *argv[]){
     do {
         token = proximoToken(&lexer);
 
+        if (token.tipo == ERRO) {
+            fprintf(stderr,
+                "Erro lexico na posicao %zu: caractere nao reconhecido \"%s\"\n",
+                token.indice,
+                token.lexema != NULL ? token.lexema : "?");
+        }
+
         if (!modoAssembly) {
             printf("<%s, \"%s\", %zu>\n",
                 nomeTipoToken(token.tipo),
-                token.lexema,
+                token.lexema != NULL ? token.lexema : "",
                 token.indice);
         }
 
