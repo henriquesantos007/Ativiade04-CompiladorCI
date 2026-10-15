@@ -60,9 +60,9 @@ Para gerar um programa assembly completo, use `--asm`. A saída padrão contém
 somente o assembly, então pode ser redirecionada diretamente para um arquivo:
 
 ```sh
-./compilador --asm tests/exemplo04.txt > programa.s
-as --64 programa.s -o programa.o
-ld programa.o -o programa
+./compilador --asm tests/exemplo04.txt > programa.s &&
+as --64 programa.s -o programa.o &&
+ld programa.o -o programa &&
 ./programa
 ```
 
